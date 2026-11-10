@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: 1234 
+      POSTGRES_DB: coffee
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - teza_db:/var/lib/postgresql/data
+volumes:
+  teza_db:

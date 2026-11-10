@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17221d">
+  <title>Teza Coffee Lot Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2923;
+      --muted: #6e7b72;
+      --line: #e5e9e4;
+      --paper: #f6f7f3;
+      --card: #fff;
+      --green: #245d43;
+      --green-soft: #e8f2e9;
+      --lime: #d6e7a2;
+      --amber: #9d6416;
+      --amber-soft: #fff4de;
+      --red: #a44337;
+      --red-soft: #fff0ed;
+      --shadow: 0 10px 30px rgba(34, 50, 40, .055);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans Thai", Tahoma, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .topbar {
+      height: 68px;
+      background: #17221d;
+      color: #f5f7f2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(18px, 5vw, 72px);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: .01em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px;
+      color: #18231d; background: var(--lime); font-size: 18px;
+    }
+    .brand small { display: block; color: #b6c3b7; font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+    .topbar-right { display: flex; gap: 9px; align-items: center; }
+    .beta { color: #c9d8b0; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+    .quiet-button, .solid-button {
+      border: 1px solid #43524a; border-radius: 9px; padding: 8px 12px; font-size: 12px;
+      color: #f5f7f2; background: transparent;
+    }
+    .quiet-button:hover { background: #26352d; }
+    .solid-button { border-color: var(--lime); background: var(--lime); color: #19241e; font-weight: 700; }
+    .solid-button:hover { background: #e2efb9; }
+    main { max-width: 1440px; margin: 0 auto; padding: 34px clamp(16px, 4vw, 56px) 60px; }
+    .intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 24px; }
+    .eyebrow { color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 5px 0 5px; font-size: clamp(25px, 3vw, 35px); letter-spacing: -.035em; line-height: 1.2; }
+    .intro p { margin: 0; color: var(--muted); max-width: 670px; }
+    .date-chip { background: white; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); white-space: nowrap; font-size: 12px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 18px; }
+    .summary-card { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 16px 18px; min-height: 111px; box-shadow: var(--shadow); }
+    .summary-label { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; }
+    .summary-icon { color: var(--green); font-size: 15px; }
+    .summary-value { margin-top: 9px; font-size: 24px; font-weight: 750; line-height: 1.15; letter-spacing: -.03em; }
+    .summary-note { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(390px, .95fr); gap: 18px; align-items: start; }
+    .stack { display: grid; gap: 14px; }
+    .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: start; padding: 17px 19px 13px; border-bottom: 1px solid #edf0eb; gap: 10px; }
+    .panel-head h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .panel-head p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .step { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border-radius: 8px; background: var(--green-soft); color: var(--green); font-size: 11px; font-weight: 800; }
+    .fields { padding: 16px 19px 19px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 12px; }
+    .field { min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; color: #3c4a41; font-size: 11px; font-weight: 650; }
+    label span { color: #89948c; font-weight: 450; }
+    input, select {
+      width: 100%; min-height: 39px; border: 1px solid #dce2dc; border-radius: 8px;
+      background: #fff; padding: 8px 10px; color: var(--ink); outline: none;
+    }
+    input:focus, select:focus { border-color: #58856b; box-shadow: 0 0 0 3px rgba(69, 127, 90, .12); }
+    input[type="checkbox"] { width: 16px; min-height: 0; height: 16px; accent-color: var(--green); }
+    .inline-check { display: flex; align-items: center; gap: 8px; color: #405047; font-size: 11px; margin-top: 9px; }
+    .inline-check label { margin: 0; font-weight: 500; }
+    details { margin: 0 19px 17px; border: 1px solid #e7ebe5; border-radius: 9px; background: #fafbf8; }
+    details summary { cursor: pointer; padding: 10px 12px; color: #4b5e51; font-size: 11px; font-weight: 700; }
+    details .fields { padding: 1px 12px 13px; gap: 10px; }
+    .notice { margin: 0 19px 17px; border-radius: 9px; background: #f5f7f2; padding: 10px 12px; color: #5f6d63; font-size: 10px; }
+    .notice a { color: var(--green); }
+    .result-panel { position: sticky; top: 12px; }
+    .grade-banner { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: #f2f7f1; border-bottom: 1px solid var(--line); }
+    .grade-seal { display: grid; place-items: center; flex: 0 0 54px; height: 54px; border-radius: 16px; background: var(--green); color: white; font-size: 21px; font-weight: 800; }
+    .grade-banner[data-tone="amber"] { background: #fff8ea; }
+    .grade-banner[data-tone="amber"] .grade-seal { background: #b87b24; }
+    .grade-banner[data-tone="red"] { background: #fff2ef; }
+    .grade-banner[data-tone="red"] .grade-seal { background: #ad5044; }
+    .grade-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+    .grade-caption { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .result-body { padding: 16px 19px 19px; }
+    .alert { border-radius: 9px; padding: 10px 12px; margin-bottom: 13px; font-size: 11px; }
+    .alert.good { background: var(--green-soft); color: #27583d; }
+    .alert.warn { background: var(--amber-soft); color: #795113; }
+    .alert.bad { background: var(--red-soft); color: #8f3d33; }
+    .metric-list { display: grid; gap: 0; }
+    .metric-row { display: flex; justify-content: space-between; gap: 15px; padding: 8px 0; border-bottom: 1px solid #eff1ed; font-size: 11px; }
+    .metric-row:last-child { border-bottom: 0; }
+    .metric-row span:first-child { color: var(--muted); }
+    .metric-row strong { text-align: right; }
+    .progress-wrap { padding: 11px 0 4px; }
+    .progress-head { display: flex; justify-content: space-between; color: #56645a; font-size: 10px; margin-bottom: 6px; }
+    .progress { height: 7px; background: #e8ece6; border-radius: 99px; overflow: hidden; }
+    .progress > i { display: block; height: 100%; width: 0; background: #58906a; border-radius: inherit; transition: width .2s; }
+    .subheading { margin: 16px 0 7px; font-size: 11px; font-weight: 750; }
+    .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .mini-card { border: 1px solid #e8ece6; border-radius: 9px; padding: 10px 11px; }
+    .mini-card span { display: block; color: var(--muted); font-size: 10px; }
+    .mini-card strong { display: block; margin-top: 3px; font-size: 15px; }
+    .suggestion { display: flex; gap: 9px; padding: 10px 11px; background: #f5f8f2; border-radius: 9px; color: #3d5644; font-size: 11px; }
+    .suggestion + .suggestion { margin-top: 7px; }
+    .suggestion b { color: var(--green); }
+    .footnote { padding: 12px 18px; border-top: 1px solid #edf0eb; color: #7b867e; font-size: 10px; }
+    .price-note { color: #7d6b4e; font-size: 10px; margin-top: 7px; }
+    .empty-price { color: #8b948d; font-size: 11px; }
+    .divider { height: 1px; margin: 14px 0; background: #edf0eb; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 5; background: #17221d; color: white; padding: 10px 14px; border-radius: 9px; box-shadow: var(--shadow); font-size: 12px; opacity: 0; transform: translateY(6px); transition: .2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .result-panel { position: static; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .topbar { height: 60px; padding: 0 15px; }
+      .beta { display: none; }
+      .quiet-button, .solid-button { padding: 7px 9px; font-size: 11px; }
+      main { padding-top: 24px; }
+      .intro { display: block; }
+      .date-chip { display: inline-block; margin-top: 13px; }
+      .summary-grid { gap: 8px; }
+      .summary-card { padding: 12px; min-height: 99px; }
+      .summary-value { font-size: 19px; }
+      .fields { padding-left: 14px; padding-right: 14px; gap: 11px 9px; }
+      .panel-head { padding-left: 14px; padding-right: 14px; }
+      details { margin-left: 14px; margin-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">T</div><div>TEZA<small>coffee lot lab</small></div></div>
+    <div class="topbar-right">
+      <span class="beta">Lot assessment · beta</span>
+      <button class="quiet-button" id="resetBtn" type="button">ล้างข้อมูล</button>
+      <button class="solid-button" id="printBtn" type="button">พิมพ์รายงาน</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <div class="eyebrow">Quality · value · product fit</div>
+        <h1>ประเมินคุณภาพและมูลค่ากาแฟในล็อตเดียว</h1>
+        <p>กรอกผลคัดตัวอย่างเพื่อดูเกรด ความเสี่ยงทางกายภาพ ช่องว่างที่ต้องคัดเพิ่ม มูลค่าแปรรูป และแนวทางขายที่เหมาะกับล็อตนี้</p>
+      </div>
+      <div class="date-chip">● คำนวณจากข้อมูลที่กรอก · <span id="todayLabel"></span></div>
+    </section>
+
+    <section class="summary-grid" aria-label="สรุปผล">
+      <article class="summary-card"><div class="summary-label">เกรดประเมิน <span class="summary-icon">◈</span></div><div class="summary-value" id="kpiGrade">—</div><div class="summary-note" id="kpiGradeNote">กรอกข้อมูลข้อบกพร่องเพื่อจัดเกรด</div></article>
+      <article class="summary-card"><div class="summary-label">ความชื้น <span class="summary-icon">◉</span></div><div class="summary-value" id="kpiMoisture">—</div><div class="summary-note" id="kpiMoistureNote">ช่วงเป้าหมาย 10–12%</div></article>
+      <article class="summary-card"><div class="summary-label">Cupping score <span class="summary-icon">✳</span></div><div class="summary-value" id="kpiScore">—</div><div class="summary-note" id="kpiScoreNote">คะแนนประเมินรสชาติ</div></article>
+      <article class="summary-card"><div class="summary-label">ราคาเขียวประมาณการ <span class="summary-icon">฿</span></div><div class="summary-value" id="kpiPrice">—</div><div class="summary-note" id="kpiPriceNote">บาทต่อกิโลกรัม</div></article>
+    </section>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head"><div><h2>ข้อมูลล็อตและราคาฐาน</h2><p>ข้อมูลแหล่งปลูก กระบวนการ และราคาอ้างอิงที่คุณใช้เทียบ</p></div><span class="step">01</span></div>
+          <div class="fields">
+            <div class="field"><label for="origin">แหล่งปลูก / สวน <span>Traceability</span></label><input id="origin" value="ดอยสะเก็ด · เชียงใหม่" placeholder="เช่น แม่จัน · เชียงราย"></div>
+            <div class="field"><label for="process">กระบวนการแปรรูป</label><select id="process"><option value="Washed">Washed</option><option value="Honey">Honey</option><option value="Natural">Natural</option></select></div>
+            <div class="field"><label for="sampleG">น้ำหนักตัวอย่าง <span>กรัม · 300–350 g</span></label><input id="sampleG" type="number" min="1" max="10000" step="1" value="350"></div>
+            <div class="field"><label for="lotGreenKg">น้ำหนักสารกาแฟทั้งล็อต <span>กก.</span></label><input id="lotGreenKg" type="number" min="0" step="0.1" value="250"></div>
+            <div class="field"><label for="cupping">Cupping score <span>0–100</span></label><input id="cupping" type="number" min="0" max="100" step="0.1" value="84"></div>
+            <div class="field"><label for="refPrice">ราคาอ้างอิงสารกาแฟ <span>บาท/กก.</span></label><input id="refPrice" type="number" min="0" step="1" placeholder="ใส่ราคาอ้างอิงล่าสุด"></div>
+            <div class="field"><label for="refSource">แหล่งราคาอ้างอิง <span>ตลาด / ผู้ซื้อ / ใบเสนอราคา</span></label><input id="refSource" placeholder="เช่น ใบเสนอราคาผู้ซื้อ"></div>
+            <div class="field"><label for="refDate">วันที่อ้างอิงราคา</label><input id="refDate" type="date"></div>
+            <div class="field"><label for="originAdj">ส่วนต่างแหล่งปลูก <span>% จากราคาฐาน</span></label><input id="originAdj" type="number" step="0.5" value="0"></div>
+            <div class="field"><label for="processAdj">ส่วนต่างกระบวนการ <span>% จากราคาฐาน</span></label><input id="processAdj" type="number" step="0.5" value="0"></div>
+            <div class="field"><label for="priceRangePct">ช่วงราคาโดยประมาณ <span>± % จากค่ากลาง</span></label><input id="priceRangePct" type="number" min="0" max="90" step="1" value="8"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><h2>ผลวิเคราะห์กายภาพ</h2><p>นับข้อบกพร่องจากตัวอย่าง แล้วระบบปรับสัดส่วนตามน้ำหนักตัวอย่าง</p></div><span class="step">02</span></div>
+          <div class="fields">
+            <div class="field"><label for="primary">Primary defects <span>จุดในตัวอย่าง</span></label><input id="primary" type="number" min="0" step="1" value="0"></div>
+            <div class="field"><label for="secondary">Secondary defects <span>full-defect equivalent</span></label><input id="secondary" type="number" min="0" step="0.5" value="4"></div>
+            <div class="field"><label for="moisture">ความชื้น <span>%</span></label><input id="moisture" type="number" min="0" max="100" step="0.1" value="11.2"></div>
+            <div class="field"><label for="screen18">Screen 18+ <span>% ของเมล็ด</span></label><input id="screen18" type="number" min="0" max="100" step="0.1" value="38"></div>
+            <div class="field"><label for="screen16">Screen 16+ รวม <span>% รวม Screen 18+</span></label><input id="screen16" type="number" min="0" max="100" step="0.1" value="82"></div>
+            <div class="field"><label for="scorePremium">ส่วนเพิ่มต่อคะแนน cupping <span>บาท/กก. ต่อ 1 คะแนนเหนือเกณฑ์</span></label><input id="scorePremium" type="number" min="0" step="1" value="0"></div>
+          </div>
+          <details>
+            <summary>ปรับเกณฑ์จัดเกรดและตัวคูณราคา</summary>
+            <div class="fields">
+              <div class="field"><label for="specialMax">Specialty: Secondary สูงสุด</label><input id="specialMax" type="number" min="0" step="0.5" value="5"></div>
+              <div class="field"><label for="premiumMax">Premium: Secondary สูงสุด</label><input id="premiumMax" type="number" min="0" step="0.5" value="8"></div>
+              <div class="field"><label for="commercialMax">Commercial: Secondary สูงสุด</label><input id="commercialMax" type="number" min="0" step="0.5" value="23"></div>
+              <div class="field"><label for="specialScore">คะแนนขั้นต่ำ Specialty</label><input id="specialScore" type="number" min="0" max="100" step="0.1" value="80"></div>
+              <div class="field"><label for="specMult">ตัวคูณราคา Specialty</label><input id="specMult" type="number" min="0" step="0.01" value="1.25"></div>
+              <div class="field"><label for="premiumMult">ตัวคูณราคา Premium</label><input id="premiumMult" type="number" min="0" step="0.01" value="1.10"></div>
+              <div class="field"><label for="commercialMult">ตัวคูณราคา Commercial</label><input id="commercialMult" type="number" min="0" step="0.01" value="1"></div>
+              <div class="field"><label for="offMult">ตัวคูณราคา Off-grade</label><input id="offMult" type="number" min="0" step="0.01" value="0.7"></div>
+              <div class="field full"><div class="inline-check"><input id="primaryBlocks" type="checkbox" checked><label for="primaryBlocks">มี Primary defect แล้วไม่ผ่าน Specialty และ Premium</label></div></div>
+            </div>
+          </details>
+          <div class="notice">เกณฑ์เริ่มต้นเป็นกติกาประเมินสำหรับเดโมและปรับได้ ไม่ใช่ผลรับรองเกรดจาก SCA — <a href="https://sca.coffee/research/coffee-standards" target="_blank" rel="noreferrer">SCA ระบุว่า SCA-110 อยู่ระหว่างทบทวน/พัฒนา</a></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><h2>แปลงสภาพและแผนขาย</h2><p>คำนวณผลผลิตคาดการณ์และเทียบรายรับกับต้นทุน</p></div><span class="step">03</span></div>
+          <div class="fields">
+            <div class="field"><label for="cherryKg">น้ำหนักผลเชอร์รี่สด <span>กก.</span></label><input id="cherryKg" type="number" min="0" step="1" value="1200"></div>
+            <div class="field"><label for="cherryCost">ต้นทุนเชอร์รี่ <span>บาท/กก.</span></label><input id="cherryCost" type="number" min="0" step="0.1" value="0"></div>
+            <div class="field"><label for="processCost">ค่าแปรรูป <span>บาท/กก.เชอร์รี่</span></label><input id="processCost" type="number" min="0" step="0.1" value="0"></div>
+            <div class="field"><label for="otherCost">ต้นทุนอื่นรวม <span>บาท/ล็อต</span></label><input id="otherCost" type="number" min="0" step="100" value="0"></div>
+            <div class="field"><label for="roast">แผนระดับคั่ว</label><select id="roast"><option value="light">Light roast</option><option value="medium" selected>Medium roast</option><option value="dark">Dark roast</option></select></div>
+            <div class="field"><label for="channel">ช่องทาง / รูปแบบขาย</label><select id="channel"><option value="single">Single origin / micro-lot</option><option value="drip">Premium drip bag</option><option value="blend">House blend / Espresso</option><option value="bulk">ขายยกล็อต</option><option value="instant">Instant / RTD processor</option></select></div>
+          </div>
+          <details>
+            <summary>ปรับอัตราส่วนผลผลิต (เชอร์รี่ : ผลผลิตแห้ง)</summary>
+            <div class="fields">
+              <div class="field"><label for="parchmentLow">กะลา · อัตราต่ำ <span>เชอร์รี่ : กะลา</span></label><input id="parchmentLow" type="number" min="1" step="0.1" value="4"></div>
+              <div class="field"><label for="parchmentHigh">กะลา · อัตราสูง <span>เชอร์รี่ : กะลา</span></label><input id="parchmentHigh" type="number" min="1" step="0.1" value="5"></div>
+              <div class="field"><label for="greenLow">สารกาแฟ · อัตราสูง <span>เชอร์รี่ : สารกาแฟ</span></label><input id="greenLow" type="number" min="1" step="0.1" value="6"></div>
+              <div class="field"><label for="greenHigh">สารกาแฟ · อัตราต่ำ <span>เชอร์รี่ : สารกาแฟ</span></label><input id="greenHigh" type="number" min="1" step="0.1" value="5"></div>
+            </div>
+            <div class="notice" style="margin:0 12px 12px">ค่าเริ่มต้นเป็นสมมติฐานสำหรับทดลอง ควรปรับตาม process, ความชื้นปลายทาง และข้อมูล yield ของสวน/โรงแปรรูป</div>
+          </details>
+        </section>
+      </div>
+
+      <aside class="panel result-panel" aria-live="polite">
+        <div class="grade-banner" id="gradeBanner" data-tone="green">
+          <div class="grade-seal" id="gradeSeal">G1</div>
+          <div><div class="eyebrow" id="gradeEyebrow">LOT QUALITY</div><div class="grade-title" id="gradeTitle">Specialty Grade 1</div><div class="grade-caption" id="gradeCaption">ประเมินจากกติกาที่ตั้งไว้</div></div>
+        </div>
+        <div class="result-body">
+          <div class="alert good" id="mainAlert">ผลการประเมินจะแสดงที่นี่</div>
+          <div class="metric-list">
+            <div class="metric-row"><span>ข้อบกพร่องที่ปรับฐาน 350 g</span><strong id="normalizedDefects">—</strong></div>
+            <div class="metric-row"><span>Primary defects</span><strong id="primaryStatus">—</strong></div>
+            <div class="metric-row"><span>Screen 18+ (AA)</span><strong id="screenAA">—</strong></div>
+            <div class="metric-row"><span>Screen 16+ (A ขึ้นไป)</span><strong id="screenA">—</strong></div>
+            <div class="metric-row"><span>Screen 16–17 (A)</span><strong id="screenAOnly">—</strong></div>
+          </div>
+          <div class="progress-wrap"><div class="progress-head"><span>ความชื้นเทียบเป้าหมาย 10–12%</span><strong id="moistureProgressText">—</strong></div><div class="progress"><i id="moistureProgress"></i></div></div>
+
+          <div class="subheading">Quality gap → Specialty</div>
+          <div class="alert warn" id="gapAlert">—</div>
+
+          <div class="subheading">มูลค่าสารกาแฟ (Green bean)</div>
+          <div class="mini-grid">
+            <div class="mini-card"><span>ประมาณการต่อกก.</span><strong id="priceRange">ใส่ราคาอ้างอิง</strong></div>
+            <div class="mini-card"><span>มูลค่าทั้งล็อต</span><strong id="lotValue">—</strong></div>
+          </div>
+          <div class="price-note" id="priceFormula">ราคาจะคำนวณจากราคาอ้างอิงและส่วนต่างที่คุณกรอก</div>
+
+          <div class="subheading">คาดการณ์ผลผลิตและจุดคุ้มทุน</div>
+          <div class="mini-grid">
+            <div class="mini-card"><span>กะลาแห้งโดยประมาณ</span><strong id="parchmentYield">—</strong></div>
+            <div class="mini-card"><span>สารกาแฟคาดการณ์</span><strong id="greenYield">—</strong></div>
+            <div class="mini-card"><span>ต้นทุนรวมแปรรูป</span><strong id="totalCost">—</strong></div>
+            <div class="mini-card"><span>ราคาคุ้มทุน/กก.สารกาแฟ</span><strong id="breakEven">—</strong></div>
+          </div>
+          <div class="metric-row"><span>กำไร/ขาดทุนประมาณการ</span><strong id="profitRange">กรอกราคาอ้างอิงและต้นทุน</strong></div>
+
+          <div class="subheading">แนวทางเพิ่มมูลค่าและแปรรูป</div>
+          <div id="recommendations"></div>
+          <div id="downgradeWarning" class="alert bad" style="display:none;margin-top:10px;margin-bottom:0"></div>
+        </div>
+        <div class="footnote">ผลคำนวณเป็นตัวช่วยคัดกรองเบื้องต้น ควรยืนยันด้วยการคัดจริง การชิม และข้อกำหนดผู้ซื้อ</div>
+      </aside>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const number = (id, fallback = 0) => {
+      const value = Number($(id).value);
+      return Number.isFinite(value) ? value : fallback;
+    };
+    const fmt = (value, digits = 1) => new Intl.NumberFormat('th-TH', { maximumFractionDigits: digits }).format(value);
+    const money = (value, digits = 0) => `${new Intl.NumberFormat('th-TH', { maximumFractionDigits: digits }).format(value)} ฿`;
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+    function calculate() {
+      const sample = Math.max(1, number('sampleG', 350));
+      const scale = 350 / sample;
+      const primary = Math.max(0, number('primary')) * scale;
+      const secondary = Math.max(0, number('secondary')) * scale;
+      const score = number('cupping');
+      const moisture = number('moisture');
+      const primaryBlocks = $('primaryBlocks').checked;
+      const specialMax = Math.max(0, number('specialMax', 5));
+      const premiumMax = Math.max(specialMax, number('premiumMax', 8));
+      const commercialMax = Math.max(premiumMax, number('commercialMax', 23));
+      const scoreMin = number('specialScore', 80);
+      const hasPrimary = primary > 0;
+
+      let grade;
+      if (secondary > commercialMax) grade = 'off';
+      else if (primaryBlocks && hasPrimary) grade = 'commercial';
+      else if (secondary <= specialMax && score >= scoreMin) grade = 'specialty';
+      else if (secondary <= premiumMax) grade = 'premium';
+      else grade = 'commercial';
+
+      const gradeInfo = {
+        specialty: { label: 'Specialty Grade 1', seal: 'G1', tone: 'green', mult: Math.max(0, number('specMult', 1.25)), short: 'Specialty' },
+        premium: { label: 'Premium Grade 2', seal: 'G2', tone: 'amber', mult: Math.max(0, number('premiumMult', 1.10)), short: 'Premium' },
+        commercial: { label: 'Commercial Grade 3', seal: 'G3', tone: 'amber', mult: Math.max(0, number('commercialMult', 1)), short: 'Commercial' },
+        off: { label: 'Off-Grade', seal: 'OG', tone: 'red', mult: Math.max(0, number('offMult', .7)), short: 'Off-Grade' }
+      }[grade];
+      $('gradeBanner').dataset.tone = gradeInfo.tone;
+      $('gradeSeal').textContent = gradeInfo.seal;
+      $('gradeTitle').textContent = gradeInfo.label;
+      $('gradeCaption').textContent = `คัดตัวอย่าง ${fmt(sample, 0)} g · ประเมินตามเกณฑ์ที่ตั้งไว้`;
+      $('kpiGrade').textContent = gradeInfo.short;
+      $('kpiGradeNote').textContent = `${fmt(secondary, 1)} secondary points / 350 g`;
+      $('kpiScore').textContent = score ? fmt(score, 1) : '—';
+      $('kpiScoreNote').textContent = score >= 82 ? 'กลุ่มคะแนนสูง · รักษามูลค่าไว้' : 'คะแนนประเมินรสชาติ';
+
+      const moistureClass = moisture > 12.5 ? 'สูง · เสี่ยงรา' : moisture > 12 ? 'สูงกว่าเป้าหมาย' : moisture < 10 ? 'ต่ำกว่าเป้าหมาย' : 'อยู่ในเป้าหมาย';
+      $('kpiMoisture').textContent = `${fmt(moisture, 1)}%`;
+      $('kpiMoistureNote').textContent = moistureClass;
+      $('moistureProgressText').textContent = moistureClass;
+      $('moistureProgress').style.width = `${clamp((moisture / 15) * 100, 0, 100)}%`;
+      $('moistureProgress').style.background = moisture > 12.5 ? '#c65e4d' : moisture > 12 || moisture < 10 ? '#c28a37' : '#58906a';
+
+      let alertText, alertClass;
+      if (grade === 'off') { alertText = 'ข้อบกพร่องรองเกินเกณฑ์ Commercial ที่ตั้งไว้ ควรคัดแยกและประเมินตัวอย่างซ้ำ'; alertClass = 'bad'; }
+      else if (hasPrimary && primaryBlocks) { alertText = `พบ Primary defect ${fmt(primary, 1)} จุด/350 g: ไม่ผ่าน Specialty และ Premium ตามกติกานี้`; alertClass = 'bad'; }
+      else if (grade === 'specialty') { alertText = 'ผ่านเกณฑ์ Specialty ตามค่าที่ตั้งไว้ ตรวจยืนยันตัวอย่างจริงก่อนประกาศเกรด'; alertClass = 'good'; }
+      else { alertText = 'ล็อตนี้ยังไม่เข้าเงื่อนไข Specialty ที่ตั้งไว้ ดูจำนวนจุดที่ต้องคัดเพิ่มด้านล่าง'; alertClass = 'warn'; }
+      if (sample < 300 || sample > 350) alertText += ` · ตัวอย่าง ${fmt(sample, 0)} g อยู่นอกช่วง 300–350 g ที่แนะนำ`;
+      $('mainAlert').className = `alert ${alertClass}`;
+      $('mainAlert').textContent = alertText;
+      $('normalizedDefects').textContent = `${fmt(primary, 1)} primary · ${fmt(secondary, 1)} secondary`;
+      $('primaryStatus').textContent = hasPrimary ? `${fmt(primary, 1)} จุด · ต้องตรวจทาน` : 'ไม่พบ';
+
+      const screen18 = clamp(number('screen18'), 0, 100);
+      const screen16 = clamp(number('screen16'), 0, 100);
+      const screenAOnly = Math.max(0, screen16 - screen18);
+      $('screenAA').textContent = `${fmt(screen18, 1)}%`;
+      $('screenA').textContent = `${fmt(screen16, 1)}%`;
+      $('screenAOnly').textContent = `${fmt(screenAOnly, 1)}%`;
+      if (screen18 > screen16) $('screenAOnly').textContent += ' · ตรวจช่วง Screen';
+
+      const needed = Math.max(0, secondary - specialMax);
+      const neededCommercial = Math.max(0, secondary - commercialMax);
+      let gapText;
+      if (grade === 'specialty') gapText = 'ล็อตนี้เข้า Specialty ตามเกณฑ์ที่ตั้งไว้แล้ว';
+      else if (grade === 'off') gapText = `คัด Secondary ออกอย่างน้อย ${fmt(neededCommercial, 1)} จุด/350 g เพื่อเข้าเขต Commercial ก่อน แล้วประเมินใหม่`;
+      else if (hasPrimary && primaryBlocks) gapText = `คัด Primary ${fmt(primary, 1)} จุด และ Secondary อย่างน้อย ${fmt(needed, 1)} จุด/350 g เพื่อให้ถึง Specialty${score < scoreMin ? `; คะแนน Cupping ต้องเพิ่มอีก ${fmt(scoreMin - score, 1)} คะแนนด้วย` : ''}`;
+      else if (score < scoreMin) gapText = `${needed > 0 ? `คัด Secondary ออกอีก ${fmt(needed, 1)} จุด/350 g และ ` : 'ข้อบกพร่องผ่านแล้ว แต่ '}คะแนน Cupping ต้องเพิ่มอีก ${fmt(scoreMin - score, 1)} คะแนนเพื่อถึง Specialty`;
+      else gapText = `คัด Secondary ออกอีก ${fmt(needed, 1)} จุด/350 g เพื่อให้ถึงเพดาน Specialty`;
+      $('gapAlert').textContent = gapText;
+
+      const base = Math.max(0, number('refPrice'));
+      const originAdj = number('originAdj') / 100;
+      const processAdj = number('processAdj') / 100;
+      const scoreBonus = Math.max(0, score - scoreMin) * Math.max(0, number('scorePremium'));
+      const centerPrice = base > 0 ? (base * gradeInfo.mult * Math.max(0, 1 + originAdj) * Math.max(0, 1 + processAdj)) + scoreBonus : 0;
+      const rangePct = clamp(number('priceRangePct', 8), 0, 90) / 100;
+      const lowPrice = centerPrice * (1 - rangePct);
+      const highPrice = centerPrice * (1 + rangePct);
+      const lotKg = Math.max(0, number('lotGreenKg'));
+      if (base > 0) {
+        $('priceRange').textContent = `${money(lowPrice)} – ${money(highPrice)}`;
+        $('lotValue').textContent = `${money(lowPrice * lotKg)} – ${money(highPrice * lotKg)}`;
+        $('kpiPrice').textContent = `${fmt(lowPrice, 0)}–${fmt(highPrice, 0)}`;
+        $('kpiPriceNote').textContent = `บาท/กก. · ช่วงจำลอง ±${fmt(rangePct * 100, 0)}%`;
+        const source = $('refSource').value.trim();
+        const date = $('refDate').value;
+        const benchmark = [source, date].filter(Boolean).join(' · ');
+        $('priceFormula').textContent = `${benchmark ? `อ้างอิง ${benchmark} · ` : ''}ฐาน ${money(base)} × ตัวคูณ ${fmt(gradeInfo.mult, 2)} × ส่วนต่างแหล่ง/กระบวนการ + score premium`;
+      } else {
+        $('priceRange').textContent = 'ใส่ราคาอ้างอิง';
+        $('lotValue').textContent = '—';
+        $('kpiPrice').textContent = '—';
+        $('kpiPriceNote').textContent = 'ต้องมีราคาอ้างอิงเพื่อคำนวณ';
+        $('priceFormula').textContent = 'ราคาประมาณการใช้ราคาอ้างอิงที่คุณกรอก ไม่ได้ดึงราคาตลาดสด';
+      }
+
+      const cherry = Math.max(0, number('cherryKg'));
+      const pLowRatio = Math.max(1, number('parchmentLow', 4));
+      const pHighRatio = Math.max(pLowRatio, number('parchmentHigh', 5));
+      const gLowRatio = Math.max(1, number('greenLow', 6));
+      const gHighRatio = Math.max(1, number('greenHigh', 5));
+      const parchmentLow = cherry / pHighRatio;
+      const parchmentHigh = cherry / pLowRatio;
+      const greenLow = cherry / Math.max(gLowRatio, gHighRatio);
+      const greenHigh = cherry / Math.min(gLowRatio, gHighRatio);
+      const totalCost = cherry * (number('cherryCost') + number('processCost')) + Math.max(0, number('otherCost'));
+      $('parchmentYield').textContent = `${fmt(parchmentLow, 0)}–${fmt(parchmentHigh, 0)} กก.`;
+      $('greenYield').textContent = `${fmt(greenLow, 0)}–${fmt(greenHigh, 0)} กก.`;
+      $('totalCost').textContent = money(totalCost);
+      const beLow = greenHigh > 0 ? totalCost / greenHigh : 0;
+      const beHigh = greenLow > 0 ? totalCost / greenLow : 0;
+      $('breakEven').textContent = greenLow > 0 ? `${money(beLow)}–${money(beHigh)}` : '—';
+      if (base > 0 && greenLow > 0) {
+        const profitLow = lowPrice * greenLow - totalCost;
+        const profitHigh = highPrice * greenHigh - totalCost;
+        $('profitRange').textContent = `${money(profitLow)} ถึง ${money(profitHigh)}`;
+        $('profitRange').style.color = profitHigh < 0 ? '#a44337' : '#245d43';
+      } else {
+        $('profitRange').textContent = 'กรอกราคาอ้างอิงและต้นทุน';
+        $('profitRange').style.color = '';
+      }
+
+      const recommendations = [];
+      if (grade === 'off') {
+        recommendations.push('<b>ใช้ประโยชน์:</b> ประเมินแยกส่วนที่ยังใช้ได้ และสอบถามผู้รับซื้อวัตถุดิบสำหรับ instant หรือ RTD');
+        recommendations.push('<b>ก่อนส่งต่อ:</b> ตรวจกลิ่นรา ความชื้น และความปลอดภัยอาหารตามข้อกำหนดโรงงาน');
+      } else if (grade === 'specialty' || (grade === 'premium' && score >= 82)) {
+        recommendations.push('<b>รักษาคุณค่า:</b> แยกขายเป็น micro-lot พร้อมระบุสวน พันธุ์ ระดับความสูง และ process เพื่อ traceability');
+        recommendations.push('<b>ช่องทางพรีเมียม:</b> Single origin filter, drip bag หรือ light roast; พิจารณาถุง barrier / GrainPro สำหรับจัดเก็บและขนส่ง');
+      } else if (grade === 'premium') {
+        recommendations.push('<b>เพิ่มมูลค่า:</b> แยกตาม process และแหล่งปลูก ทำ lot card ให้ผู้ซื้อชิมก่อนเสนอราคา');
+        recommendations.push('<b>ผลิตภัณฑ์:</b> medium roast, drip bag หรือ espresso blend ที่ยังระบุแหล่งที่มาได้');
+      } else if (grade === 'commercial') {
+        recommendations.push('<b>ทางเลือกขาย:</b> คัดแยกสิ่งบกพร่องซ้ำ แล้วพิจารณา medium–dark roast สำหรับ house blend / espresso');
+        recommendations.push('<b>ลดการปะปน:</b> เก็บข้อมูลแหล่งปลูกและฤดูเก็บเกี่ยวไว้ เพื่อรวมล็อตอย่างมีที่มา');
+      }
+      $('recommendations').innerHTML = recommendations.map(x => `<div class="suggestion"><span>↗</span><span>${x}</span></div>`).join('');
+
+      const downgrade = score >= 82 && ( $('roast').value === 'dark' || $('channel').value === 'blend' );
+      $('downgradeWarning').style.display = downgrade ? 'block' : 'none';
+      $('downgradeWarning').textContent = downgrade ? 'คำเตือน: ล็อตนี้ได้ Cupping 82+ การคั่วเข้มจัดหรือผสมเป็นเบลนด์ทั่วไปอาจกลบเอกลักษณ์และลดมูลค่าที่ขายแบบแยกแหล่งได้' : '';
+    }
+
+    function resetForm() {
+      const defaults = { origin: 'ดอยสะเก็ด · เชียงใหม่', process: 'Washed', sampleG: 350, lotGreenKg: 250, cupping: 84, refPrice: '', refSource: '', refDate: '', originAdj: 0, processAdj: 0, priceRangePct: 8, primary: 0, secondary: 4, moisture: 11.2, screen18: 38, screen16: 82, scorePremium: 0, specialMax: 5, premiumMax: 8, commercialMax: 23, specialScore: 80, specMult: 1.25, premiumMult: 1.10, commercialMult: 1, offMult: .7, cherryKg: 1200, cherryCost: 0, processCost: 0, otherCost: 0, roast: 'medium', channel: 'single', parchmentLow: 4, parchmentHigh: 5, greenLow: 6, greenHigh: 5 };
+      Object.entries(defaults).forEach(([id, value]) => { $(id).value = value; });
+      $('primaryBlocks').checked = true;
+      calculate();
+      showToast('คืนค่าเริ่มต้นแล้ว');
+    }
+    let toastTimer;
+    function showToast(message) {
+      const toast = $('toast'); toast.textContent = message; toast.classList.add('show');
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculate));
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', calculate));
+    $('resetBtn').addEventListener('click', resetForm);
+    $('printBtn').addEventListener('click', () => window.print());
+    $('todayLabel').textContent = new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(new Date());
+    calculate();
+  </script>
+  <style>
+    @media print {
+      body { background: white; }
+      .topbar-right, .quiet-button, .solid-button, details { display: none !important; }
+      main { max-width: none; padding: 15px; }
+      .layout { grid-template-columns: 1fr 1fr; }
+      .result-panel { position: static; }
+      .panel, .summary-card { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</body>
+</html>

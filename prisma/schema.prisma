@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model Lot {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  origin String @default("")
+  variety String @default("")
+  process String @default("")
+  status String @default("กำลังตรวจ")
+  weight Float?
+  notes String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  observations Observation[]
+}
+model Observation {
+  id String @id @default(cuid())
+  lotId String
+  lot Lot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  type String
+  value String
+  unit String @default("")
+  source String @default("")
+  notes String @default("")
+  createdAt DateTime @default(now())
+}

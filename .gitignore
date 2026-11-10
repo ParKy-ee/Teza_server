@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.next-dev/
+.next-diagnostic/
+.npm-tool/
+.npm-cache/
+.tmp/
+.env
+*.tsbuildinfo
