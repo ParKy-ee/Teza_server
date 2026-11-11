@@ -107,6 +107,7 @@ prisma/
   schema.prisma            โครงสร้างฐานข้อมูลของแอป
   migrations/              ประวัติ migration
   seed.cjs                 เพิ่มข้อมูลตัวอย่าง
+mqtt/                      ตัวรับและตรวจสอบ payload MQTT แบบทดลอง
 docs/                      แผนระบบและแบบร่างการเชื่อม Edge
 prototype/                 ต้นแบบก่อนสร้าง Next.js
 docker-compose.yml         PostgreSQL สำหรับพัฒนาในเครื่อง
@@ -130,6 +131,10 @@ PostgreSQL เป็นบริการแยกจาก Next.js โดย Pr
 ## สถานะและขอบเขตปัจจุบัน
 
 - ส่วนผลตรวจภาพในหน้าล็อตเป็น **UI จำลอง** สำหรับล็อต `DEMO-LOT-*` ยังไม่ได้รับภาพหรือผลตรวจจากอุปกรณ์จริง ดูแบบข้อมูลที่เสนอใน [docs/edge-inspection-design.md](docs/edge-inspection-design.md)
+- มี subscriber MQTT สำหรับตรวจ payload ในขั้นทดลอง แต่ยังไม่บันทึก event หรือภาพลงฐานข้อมูล ดูการตั้งค่าและข้อจำกัดใน [docs/mqtt-handoff.md](docs/mqtt-handoff.md)
+- รัน `npm run mqtt:moisture` เพื่อเริ่ม backend worker อ่าน topic `coffee/moisture/data` และแสดงข้อความใน terminal; worker ยังไม่ตีความค่าหรือบันทึกฐานข้อมูล ดู [docs/mqtt-handoff.md](docs/mqtt-handoff.md)
+- Prisma มี schema ฉบับร่างสำหรับ event, detection, measurement และ review ให้ตรวจใน [docs/prisma-edge-review.md](docs/prisma-edge-review.md); migration รุ่นล่าสุดยังไม่พร้อมใช้ และ subscriber ยังไม่ได้บันทึกลงตารางเหล่านี้
+- เริ่ม Mosquitto สำหรับพัฒนาด้วย `docker compose up -d mosquitto` โดย broker เปิด port `1884` ทุก network interface ของเครื่อง; ดูวิธีตั้งค่าและข้อจำกัดในเอกสาร MQTT
 - ระบบยังไม่มี authentication/authorization การเชื่อม sensor หรือ edge การอัปโหลดภาพ และการเชื่อมตลาดหรือการขายจริง จึงควรใช้ในสภาพแวดล้อมพัฒนาก่อน
 - การลบล็อตจะลบรายการตรวจที่เกี่ยวข้องด้วย
 - คำตอบ AI และข้อมูลจำลองต้องตรวจสอบก่อนนำไปใช้ตัดสินใจ ข้อมูลผลตรวจจากโมเดลไม่ใช่เกรดที่ได้รับการรับรอง

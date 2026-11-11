@@ -5,6 +5,7 @@
 - This repository is a Thai-first coffee lot management application. The root application uses Next.js App Router, React, TypeScript, Prisma, PostgreSQL, and Ollama.
 - `components/workspace.tsx` coordinates state and API calls; dashboard, lot management, chat and edit dialog live in separate files under `components/`. Shared types are in `components/workspace-types.ts`. API routes are in `app/api/`; Prisma client is in `lib/db.ts`.
 - `prisma/schema.prisma` defines the current application schema; `prisma/migrations/` contains database migrations. `docker-compose.yml` runs a local PostgreSQL service named `db` with a persistent volume.
+- `mqtt/` contains separate backend MQTT workers for validating proposed Coffee Vision v2 payloads and reading moisture messages. Neither worker persists messages or provides application-level acknowledgements. See `docs/mqtt-handoff.md`.
 - `prototype/` contains earlier examples; `docs/` contains planning and a draft schema. Treat these as references, not proof that their full functionality exists in the application.
 
 ## Working conventions

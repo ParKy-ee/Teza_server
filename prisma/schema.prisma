@@ -18,6 +18,9 @@ model Lot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   observations Observation[]
+  detectionEvents DetectionEvent[]
+  measurements Measurement[]
+  images LotImage[]
 }
 model Observation {
   id String @id @default(cuid())
@@ -29,4 +32,116 @@ model Observation {
   source String @default("")
   notes String @default("")
   createdAt DateTime @default(now())
+}
+
+enum CoffeeClass {
+  good
+  shell
+  full_black
+  hull_husk
+  broken_chipped_cut
+  parchment
+  immature_unripe
+}
+
+enum ImageType {
+  source
+  crop
+}
+
+// JPEG bytes are stored in PostgreSQL. A crop is not the source frame.
+model LotImage {
+  id        String @id @default(cuid())
+  lotId     String
+  lot       Lot @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  imageType ImageType
+  jpegData  Bytes @db.ByteA
+  detectionEventId String?
+  detectionEvent DetectionEvent? @relation("EventImages", fields: [detectionEventId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  events DetectionEvent[] @relation("EventSourceImage")
+  detections Detection[] @relation("DetectionSourceImage")
+  cropDetection Detection? @relation("DetectionCropImage")
+
+  @@index([lotId, createdAt])
+  @@index([detectionEventId])
+}
+
+// One event represents one source frame, not a deduplicated lot total.
+model DetectionEvent {
+  id                String   @id @default(cuid())
+  eventId           String   @unique
+  deviceId          String
+  batchId           String
+  // Ingestion resolves batchId by exact match to Lot.code; unmatched events are rejected.
+  lotId             String?
+  lot               Lot?     @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  // Set explicitly from Pi captured_at; there is no server-time default.
+  createdAt         DateTime @db.Timestamptz(3)
+  imageId           String?
+  image             LotImage? @relation("EventSourceImage", fields: [imageId], references: [id], onDelete: Restrict)
+  images            LotImage[] @relation("EventImages")
+  totalCount        Int
+  normalCount       Int
+  defectCount       Int
+  countsByClass     Json
+  reviews           InspectionReview[]
+
+  @@index([batchId, createdAt])
+  @@index([lotId, createdAt])
+  @@index([deviceId, createdAt])
+  @@index([imageId])
+}
+
+model Detection {
+  id              String   @id @default(cuid())
+  imageId         String?
+  image           LotImage? @relation("DetectionSourceImage", fields: [imageId], references: [id], onDelete: Restrict)
+  cropImageId     String @unique
+  cropImage       LotImage @relation("DetectionCropImage", fields: [cropImageId], references: [id], onDelete: Restrict)
+  detectionId     String
+  className       CoffeeClass
+  status          String
+  confidence      Float
+  // xyxy coordinates in source image pixels, if supplied by the device.
+  bboxX1          Int?
+  bboxY1          Int?
+  bboxX2          Int?
+  bboxY2          Int?
+  lengthMm        Float?
+  widthMm         Float?
+  reviews         InspectionReview[]
+
+  @@index([imageId, className])
+}
+ 
+// Values may be unknown (e.g. a failed or stale sensor reading).
+model Measurement {
+  id              String   @id @default(cuid())
+  batchId         String
+  lotId           String?
+  lot             Lot?     @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  sampleId        String?
+  value           Float?
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([batchId, createdAt])
+  @@index([lotId, createdAt])
+}
+
+// Append reviews instead of overwriting the model's original detection.
+model InspectionReview {
+  id                 String   @id @default(cuid())
+  eventId            String
+  event              DetectionEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  detectionId        String?
+  detection          Detection? @relation(fields: [detectionId], references: [id], onDelete: Restrict)
+  reviewer           String
+  reviewedAt         DateTime @default(now()) @db.Timestamptz(3)
+  outcome            String
+  correctedClassName String?
+  notes              String?
+
+  @@index([eventId, reviewedAt])
+  @@index([detectionId, reviewedAt])
 }
