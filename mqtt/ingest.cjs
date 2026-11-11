@@ -19,7 +19,7 @@ async function ingestEvent(prisma, payload, limits) {
     } });
     for (const item of event.detections) {
       const crop = await tx.lotImage.create({ data: {
-        lotId, detectionEventId: record.id, imageType: 'crop', jpegData: Buffer.from(item.crop_image.data, 'base64'),
+        lotId, detectionEventId: record.id, imageType: 'crop', jpegBase64: item.crop_image.data,
       } });
       const coordinates = item.bbox?.coordinates;
       await tx.detection.create({ data: {

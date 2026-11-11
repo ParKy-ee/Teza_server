@@ -1,5 +1,13 @@
 # เตรียมรับ Coffee Vision ผ่าน MQTT
 
+## Payload จาก `coffee/detections`
+
+อุปกรณ์ส่ง `schema_version` เป็นเลข 2, `device_id`, `frame_id`, `timestamp`, ภาพรวมแบบ annotated JPEG Base64, summary และ detections ที่มี `class_id`, `class_name`, confidence และ bbox ทศนิยม `mqtt/detections-contract.cjs` ตรวจข้อมูลชุดนี้แยกจากสัญญา v2 เดิม และ subscriber จะแสดง `validated_not_saved` เมื่อผ่าน โดยไม่พิมพ์ Base64 ภาพ placeholder ในตัวอย่างของผู้ใช้ไม่ใช่ภาพจริงและจะไม่ผ่านการตรวจ
+
+Payload นี้ไม่มี `batch_id`, `lot_id` หรือ event ID ที่รับประกันไม่ซ้ำ และอาจมี `frame_id` ซ้ำหลังอุปกรณ์รีสตาร์ต ส่วน `borer` ไม่อยู่ใน enum ที่ออกแบบจากเอกสารก่อนหน้า bbox เป็นเลขทศนิยม ในขณะที่ schema เดิมใช้จำนวนเต็ม และมีภาพ annotated หนึ่งภาพแทน crop แยกเมล็ด จึงยังไม่บันทึกข้อมูลลง DB หรือเดาว่าเป็นล็อตใด ต้องตกลงวิธีเชื่อมล็อตและปรับ schema/migration รวมถึงการส่งซ้ำก่อน
+
+การวาด bbox บน annotated image ต้องยืนยันพิกัดอ้างอิงจากอุปกรณ์ หากภาพ annotated ถูกปรับขนาดจาก `width`/`height` ต้องปรับสเกลให้ตรงก่อน และภาพนี้อาจมีกรอบที่ Pi วาดมาแล้ว
+
 อ้างอิงไฟล์ Coffee Vision — Payload & Server Handoff: สัญญา v2.0 ในเอกสารเป็น **HTTP JSON** ยังไม่ได้กำหนด MQTT topic, QoS, authentication หรือ application acknowledgement ที่ใช้จริง ส่วนนี้จึงเป็นโครงสำหรับทดลองรับ JSON เดียวกันผ่าน MQTT ไม่ใช่การยืนยันว่าทีม Pi รองรับ MQTT แล้ว
 
 ## Payload ที่รับ
@@ -10,11 +18,11 @@
 
 ## ตั้งค่าทดลอง
 
-ติดตั้ง dependencies ด้วย `npm install` เพิ่มค่าต่อไปนี้ใน `.env` ให้ตรงกับ broker ที่ทีมใช้งาน (topic ข้างล่างเป็นตัวอย่างเท่านั้น):
+ติดตั้ง dependencies ด้วย `npm install` เพิ่มค่าต่อไปนี้ใน `.env` ให้ตรงกับ broker ที่ทีมใช้งาน (topic ผลตรวจสำหรับอุปกรณ์ rpi-01):
 
 ```env
 MQTT_URL="mqtt://127.0.0.1:1884"
-MQTT_TOPIC="coffee/vision/v2/events"
+MQTT_TOPIC="coffee/vision/rpi-01/events"
 MQTT_USERNAME=""
 MQTT_PASSWORD=""
 MQTT_MAX_MESSAGE_BYTES=10485760
@@ -44,6 +52,7 @@ broker ใน Compose เปิด port `1884` ทุก network interface ข�
 รูปแบบ payload ความชื้นยังไม่ได้ตกลงกัน worker จึงยังไม่ระบุว่าค่าที่ได้รับคือความชื้นเมล็ดหรืออากาศ ไม่บันทึกฐานข้อมูล ไม่ให้หน้าเว็บอ่านค่า และไม่มี application acknowledgement ให้หยุดด้วย Ctrl+C
 
 - `mqtt/contract.cjs` ตรวจโครงสร้าง class/status, summary, moisture, bbox, Base64, JPEG และขนาดภาพ; `mqtt/subscriber.cjs` รับข้อความและแสดงเพียง metadata โดยไม่พิมพ์ภาพหรือ credentials
+- Log แสดงเป็น JSON ใน terminal ของ worker: ผลภาพแสดง event, summary และ detection โดยไม่พิมพ์ Base64 ส่วนความชื้นแสดงข้อความที่รับจริง ฟิลด์ `outcome` แยก `validated_not_saved`, `rejected` และ `received_not_saved`; log เหล่านี้ยังไม่ได้เก็บลงไฟล์หรือฐานข้อมูล
 - ผล `validated_not_saved` หมายถึงตรวจรูปแบบผ่าน **ยังไม่บันทึกภาพหรือข้อมูลลง PostgreSQL และยังไม่แสดงในหน้าล็อต** ข้อความที่ไม่ผ่านจะพิมพ์เหตุผลและไม่บันทึกเช่นกัน
 - มีฟังก์ชัน `mqtt/ingest.cjs` ที่จับคู่ `batch_id` กับ `Lot.code` แบบตรงตัว และเตรียมบันทึก JPEG crop ใน transaction แต่ยังไม่ได้เชื่อมกับ subscriber หรือใช้งานกับฐานข้อมูลจริง ดูข้อจำกัด migration ใน `docs/prisma-edge-review.md`
 - QoS 1 เป็นการรับประกันระดับ MQTT transport เท่านั้น ไม่ใช่การยืนยันว่าแอปบันทึก event สำเร็จ โครงนี้ไม่มี durable queue, deduplication, retry ระดับแอป หรือ application ACK/NACK อย่าใช้เป็น ingestion production หรือให้ Pi ลบข้อมูลต้นทางตาม MQTT ACK

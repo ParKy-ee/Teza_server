@@ -3,7 +3,7 @@ require('@next/env').loadEnvConfig(process.cwd());
 const mqtt = require('mqtt');
 
 const brokerUrl = process.env.MQTT_URL || 'mqtt://127.0.0.1:1884';
-const topic = process.env.MQTT_MOISTURE_TOPIC || 'coffee/moisture/data';
+const topic = process.env.MQTT_MOISTURE_TOPIC || '';
 const maxBytes = 64 * 1024;
 const client = mqtt.connect(brokerUrl, {
   username: process.env.MQTT_USERNAME || undefined,
@@ -29,6 +29,6 @@ client.on('message', (receivedTopic, payload, packet) => {
   const text = payload.toString('utf8');
   let message;
   try { message = JSON.parse(text); } catch { message = text; }
-  console.log(JSON.stringify({ topic: receivedTopic, receivedAt: new Date().toISOString(), retained: packet.retain, message }));
+  console.log(JSON.stringify({ type: 'moisture', outcome: 'received_not_saved', topic: receivedTopic, receivedAt: new Date().toISOString(), qos: packet.qos, retained: packet.retain, payloadBytes: payload.length, message }));
 });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => client.end(false, () => process.exit(0)));

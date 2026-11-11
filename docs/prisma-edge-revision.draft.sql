@@ -83,7 +83,7 @@ CREATE TABLE "LotImage" (
     "id" TEXT NOT NULL,
     "lotId" TEXT NOT NULL,
     "imageType" "ImageType" NOT NULL,
-    "jpegData" BYTEA NOT NULL,
+    "jpegBase64" TEXT NOT NULL,
     "detectionEventId" TEXT,
     "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

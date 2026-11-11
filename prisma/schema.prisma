@@ -49,13 +49,13 @@ enum ImageType {
   crop
 }
 
-// JPEG bytes are stored in PostgreSQL. A crop is not the source frame.
+// Standard Base64-encoded JPEG is stored in PostgreSQL without a data URI prefix.
 model LotImage {
   id        String @id @default(cuid())
   lotId     String
   lot       Lot @relation(fields: [lotId], references: [id], onDelete: Restrict)
   imageType ImageType
-  jpegData  Bytes @db.ByteA
+  jpegBase64 String @db.Text
   detectionEventId String?
   detectionEvent DetectionEvent? @relation("EventImages", fields: [detectionEventId], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now()) @db.Timestamptz(3)

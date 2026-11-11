@@ -7,7 +7,7 @@ Migration ก่อนหน้า `20261111000000_edge_inspection` ยังอ
 ## โครงสร้างที่เสนอ
 
 - `DetectionEvent`: เก็บ event ID จาก Pi, device ID, batch ID, lot ID, image ID (ยังไม่บังคับ), จำนวนรวมและ `countsByClass`; `createdAt` ต้องกำหนดจาก `captured_at` ของ Pi และไม่มีค่าเริ่มต้นจาก server ใน ingestion กำหนดให้ `batch_id` ต้องตรงกับ `Lot.code` ทุกตัวอักษร หากไม่พบล็อตจะไม่บันทึก event
-- `LotImage`: เก็บ JPEG bytes ใน PostgreSQL ระบุ lot, event และชนิด `source` หรือ `crop`; การลบล็อตที่มีภาพถูกจำกัดไว้โดย relation นี้
+- `LotImage`: เก็บ JPEG ในรูปข้อความ Base64 ที่ `jpegBase64` ใน PostgreSQL ระบุ lot, event และชนิด `source` หรือ `crop`; การลบล็อตที่มีภาพถูกจำกัดไว้โดย relation นี้
 - `Detection`: เก็บ cropImageId บังคับ และ imageId ภาพต้นฉบับเมื่อมี พร้อม detection ID, `className` เป็น enum `CoffeeClass` 7 คลาส, status, confidence, bbox และขนาดจริง `lengthMm`/`widthMm` ที่เป็น null ได้
 - `Measurement`: เหลือ batch ID, lot ID, sample ID, value และ `createdAt` ที่ server กำหนดเมื่อบันทึก ไม่มีชนิด หน่วย สถานะ หรือเวลาวัดจากอุปกรณ์
 - `InspectionReview`: เก็บผลตรวจทาน event และ detection แยกจากผลโมเดลเดิม ผู้ใช้ยังไม่ได้สั่งลบ event ID ในตาราง review จึงคงไว้
@@ -24,9 +24,9 @@ Migration ก่อนหน้า `20261111000000_edge_inspection` ยังอ
 
 ## โค้ดจัดการภาพที่เตรียมไว้
 
-`mqtt/ingest.cjs` ตรวจ v2 payload แล้วค้น `Lot.code` จาก `batch_id` แบบตรงตัว ก่อนแปลง Base64 กลับเป็น JPEG bytes และเตรียมเก็บ event, ภาพ crop และ detection ใน transaction เดียว เมื่อไม่พบล็อตหรือ event ID ซ้ำ transaction จะล้มเหลว การส่งซ้ำจึงยังไม่ถือเป็น retry ที่ยืนยันแล้ว ฟังก์ชันนี้ **ยังไม่ได้เชื่อม subscriber** เพราะ migration ล่าสุดและ application ACK ยังไม่พร้อม
+`mqtt/ingest.cjs` ตรวจ v2 payload และตรวจ JPEG โดยถอดรหัสเพื่อยืนยันความถูกต้อง จากนั้นค้น `Lot.code` จาก `batch_id` แบบตรงตัว และเตรียมเก็บ Base64, event, ภาพ crop และ detection ใน transaction เดียว เมื่อไม่พบล็อตหรือ event ID ซ้ำ transaction จะล้มเหลว การส่งซ้ำจึงยังไม่ถือเป็น retry ที่ยืนยันแล้ว ฟังก์ชันนี้ **ยังไม่ได้เชื่อม subscriber** เพราะ migration ล่าสุดและ application ACK ยังไม่พร้อม
 
-`GET /api/lots/{lotId}/images` ออกแบบไว้สำหรับดูรายการภาพและ detection ที่เกี่ยวข้อง และ `GET /api/images/{imageId}` คืนไฟล์ JPEG โดย API นี้ยังไม่มีระบบบัญชีหรือ authorization และยังต้องใช้ migration ที่เตรียมอย่างถูกต้องก่อนจึงใช้งานได้จริง
+`GET /api/lots/{lotId}/images` ออกแบบไว้สำหรับดูรายการภาพและ detection ที่เกี่ยวข้อง และ `GET /api/images/{imageId}` ถอด Base64 จาก DB คืนเป็น JPEG โดย API นี้ยังไม่มีระบบบัญชีหรือ authorization และยังต้องใช้ migration ที่เตรียมอย่างถูกต้องก่อนจึงใช้งานได้จริง Base64 ใช้พื้นที่มากกว่า JPEG ไบนารีประมาณหนึ่งในสาม
 
 bbox จาก v2 เป็นพิกัดของภาพต้นฉบับ ไม่ใช่พิกัดใน crop แม้เก็บพิกัดไว้ได้ แต่ไม่สามารถวาดบนภาพ crop ได้อย่างถูกต้องโดยไม่มีข้อมูลแปลงพิกัดและภาพต้นฉบับ
 

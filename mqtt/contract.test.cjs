@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const sharp = require('sharp');
 const { classes, parseEvent } = require('./contract.cjs');
 const { ingestEvent } = require('./ingest.cjs');
+const { visionLog } = require('./logging.cjs');
 const limits = { messageBytes: 1024 * 1024, imageBytes: 100_000, imagePixels: 100_000 };
 async function sample() {
   const data = (await sharp({ create: { width: 4, height: 3, channels: 3, background: '#61865a' } }).jpeg().toBuffer()).toString('base64');
@@ -23,7 +24,7 @@ test('rejects invalid bbox and oversized message', async () => {
   const event = await sample(); event.detections[0].bbox = { format: 'xyxy', unit: 'px', coordinates: [0, 0, 1, 1] }; await assert.rejects(parse(event));
   await assert.rejects(parseEvent(Buffer.alloc(50), { ...limits, messageBytes: 1 }));
 });
-test('maps batch_id to the lot code and saves the validated JPEG and detection', async () => {
+test('maps batch_id to the lot code and saves validated Base64 and detection', async () => {
   const event = await sample(); const saved = {};
   const tx = {
     lot: { findUnique: async (query) => { assert.deepEqual(query.where, { code: 'batch-1' }); return { id: 'lot-1' }; } },
@@ -35,7 +36,8 @@ test('maps batch_id to the lot code and saves the validated JPEG and detection',
   await ingestEvent(prisma, Buffer.from(JSON.stringify(event)), limits);
   assert.equal(saved.image.lotId, 'lot-1');
   assert.equal(saved.image.detectionEventId, 'db-event');
-  assert.deepEqual(saved.image.jpegData, Buffer.from(event.detections[0].crop_image.data, 'base64'));
+  assert.equal(saved.image.jpegBase64, event.detections[0].crop_image.data);
+  assert.deepEqual(Buffer.from(saved.image.jpegBase64, 'base64'), Buffer.from(event.detections[0].crop_image.data, 'base64'));
   assert.equal(saved.detection.cropImageId, 'crop-1');
   assert.equal(saved.detection.imageId, undefined);
   assert.equal(saved.event.createdAt.toISOString(), '2026-11-10T07:30:00.000Z');
@@ -45,4 +47,11 @@ test('rejects an unknown batch without creating any event or image', async () =>
   const tx = { lot: { findUnique: async () => null }, detectionEvent: { create: async () => { writes++; } }, lotImage: { create: async () => { writes++; } } };
   await assert.rejects(ingestEvent({ $transaction: async (callback) => callback(tx) }, Buffer.from(JSON.stringify(event)), limits), /No lot found for batch_id: batch-1/);
   assert.equal(writes, 0);
+});
+test('vision log contains detection details but never the Base64 image', async () => {
+  const event = await sample();
+  const entry = visionLog(event, { topic: 'coffee/vision/v2/events', qos: 1, retain: false, payload: Buffer.from('test') });
+  assert.equal(entry.detections[0].className, 'good');
+  assert.equal(entry.outcome, 'validated_not_saved');
+  assert.equal(JSON.stringify(entry).includes(event.detections[0].crop_image.data), false);
 });

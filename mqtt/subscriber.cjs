@@ -1,6 +1,8 @@
 require('@next/env').loadEnvConfig(process.cwd());
 const mqtt = require('mqtt');
 const { parseEvent } = require('./contract.cjs');
+const { visionLog } = require('./logging.cjs');
+const { parseDetections } = require('./detections-contract.cjs');
 
 const url = process.env.MQTT_URL;
 const topic = process.env.MQTT_TOPIC;
@@ -18,10 +20,15 @@ client.on('error', (error) => console.error('MQTT error:', error.message));
 // MQTT transport acknowledgements do not mean the event was persisted.
 client.handleMessage = async (packet, done) => {
   try {
+    if (packet.topic === 'coffee/detections') {
+      const event = await parseDetections(packet.payload, limits);
+      console.log(JSON.stringify({ type: 'coffee_detections', outcome: 'validated_not_saved', topic: packet.topic, receivedAt: new Date().toISOString(), deviceId: event.device_id, frameId: event.frame_id, capturedAt: event.timestamp, image: { filename: event.image.filename, width: event.image.width, height: event.image.height, annotatedWidth: event.image.annotated_width, annotatedHeight: event.image.annotated_height }, summary: event.summary, detections: event.detections }));
+      return;
+    }
     const event = await parseEvent(packet.payload, limits);
-    console.log(JSON.stringify({ outcome: 'validated_not_saved', event_id: event.event_id, device_id: event.device_id, batch_id: event.batch_id, total_count: event.summary.total_count }));
+    console.log(JSON.stringify(visionLog(event, packet)));
   } catch (error) {
-    console.error('Rejected message:', error.issues ? JSON.stringify(error.issues.map(({ path, message }) => ({ path, message }))) : error.message);
+    console.error(JSON.stringify({ type: 'coffee_vision', outcome: 'rejected', receivedAt: new Date().toISOString(), topic: packet.topic, qos: packet.qos, retained: Boolean(packet.retain), payloadBytes: packet.payload.length, errors: error.issues ? error.issues.map(({ path, message }) => ({ path, message })) : [{ message: error.message }] }));
   } finally { done(); }
 };
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => client.end(false, () => process.exit(0)));
